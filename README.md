@@ -52,7 +52,7 @@ Wakeup (cada 10s)
     │
     ├─ [Cada ciclo]  Parpadear LEDs, verificar hora RTC
     │
-    ├─ [Si hora == 00:00 ó 12:00]  Transmitir caché acumulado
+    |
     │
     ├─ [Si bootCount == 180]  → Cada 30 minutos
     │       ├── Verificar SD / RTC
