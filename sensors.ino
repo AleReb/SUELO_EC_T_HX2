@@ -64,6 +64,8 @@ bool readSoilSensor(ModbusMaster &node, int nodeId, float &outTemp,
 // --- Imprime todos los valores por Serial ---
 void printAllSensors() {
   Serial.println("--------------------------------------------------");
+  Serial.print("Timestamp:   ");
+  Serial.println(now.unixtime());
   Serial.print("Air Temp:    ");
   Serial.print(airTemperature);
   Serial.println(" C");

@@ -115,7 +115,6 @@ void setup() {
     muxCycleLeds();  // Secuencia de Leds de booteo
     checkSD();       // Verificamos tarjeta SD
     checkFile();     // Verificamos que existan los CSV
-    clearCache();    // Elimina y reconstruye archivo caché
     checkRTC();      // Verificamos el funcionamiento del RTC
     checkTime();     // Vemos la hora
     checkSensors();  // Verifica lectura sensores

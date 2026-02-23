@@ -44,7 +44,6 @@ void sendData() {
     while (myModem.available()) { // Recibe el estado inicial
       Serial.print((char)myModem.read());
     }
-    // comandoAT("AT+COPS=0", "\r\nOK\r\n", 1000);
 
     for (int i = 0; i < 20; i++) { // Verifica conexión
       if (connectGSM()) {
@@ -58,14 +57,36 @@ void sendData() {
 
     if (modemReady) {
       connectGPRS();
-      sendCache();
+
+      bool currentSuccess = sendCurrentData();
+
+      if (!currentSuccess) {
+        Serial.println(
+            "Fallo al enviar dato actual por GPRS/HTTP. Guardando en CACHE.");
+        saveToCache(dataMessage);
+      } else {
+        Serial.println(
+            "Dato actual enviado OK. Revisando si hay cache pendiente...");
+        int cacheFilas = countFileRows(SD, "/cache.csv");
+        if (cacheFilas > 0) {
+          Serial.print("Hay ");
+          Serial.print(cacheFilas);
+          Serial.println(" datos en cache. Intentando enviar...");
+          sendCache(); // Envia y borra archivo cache
+        }
+      }
+
       closeGPRS();
     } else {
-      Serial.println("No hay señal. No borramos Caché.");
+      Serial.println("No hay red GSM. Guardando en CACHE de respaldo.");
+      saveToCache(dataMessage);
       muxRedLed();
       delay(1000);
       muxOffLed();
     }
+  } else {
+    Serial.println("Falla encendido Modem. Guardando en CACHE de respaldo.");
+    saveToCache(dataMessage);
   }
   myModem.end();
   digitalWrite(17, LOW);
@@ -73,6 +94,35 @@ void sendData() {
 
   for (int i = 0; i < 5; i++)
     blinkGreenLed();
+}
+
+bool sendCurrentData() {
+  String url = String(BASE_SERVER_URL) + String(airTemperature, 1) + "," +
+               String(airHumidity, 1) + "," + String(soilEC, 1) + "," +
+               String(soilTemperature, 1) + "," + String(soilMoisture, 1) +
+               "," + String(bateria, 4) + ",0,0," + String(signalValue) +
+               ",0,0," + String(soilEC2, 1) + "," +
+               String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) +
+               "&times=" + String(now.unixtime());
+
+  Serial.println("\n--- Enviando Dato Actual ---");
+  Serial.print("URL: ");
+  Serial.println(url);
+
+  String atCommand = "AT+HTTPPARA=\"URL\",\"" + url + "\"";
+  // Evitar sobrecargar Serial con el commando tan largo, solo url
+  comandoAT(atCommand.c_str(), "OK", 1000);
+  delay(1000);
+
+  if (comandoAT("AT+HTTPACTION=0", "\r\nOK\r\n\r\n+HTTPACTION: 0,201,66\r\n",
+                10000)) {
+    Serial.println("Envio Exitoso (201)");
+    comandoAT("AT+HTTPREAD=66", "any", 1000);
+    return true;
+  } else {
+    Serial.println("Falla en envio (HTTPACTION)");
+    return false;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////

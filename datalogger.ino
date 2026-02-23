@@ -12,11 +12,16 @@ void saveDataToSD() {
                 String(soilMoisture, 1) + "," + String(soilEC2, 1) + "," +
                 String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) +
                 "\r\n";
-  Serial.print("> Guardando logs: ");
+  Serial.print("> Guardando histórico: ");
   Serial.println(dataMessage);
 
   appendFile(SD, "/data.csv", dataMessage.c_str());
-  appendFile(SD, "/cache.csv", dataMessage.c_str());
+}
+
+void saveToCache(String msg) {
+  Serial.print("> Guardando en CACHE (Fallback): ");
+  Serial.println(msg);
+  appendFile(SD, "/cache.csv", msg.c_str());
 }
 
 void checkFile() {
