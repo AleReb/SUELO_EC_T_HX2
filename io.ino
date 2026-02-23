@@ -1,29 +1,56 @@
 //  Encender la VRM (5V y 3.3V)
-void turnOnVRM(){
+void turnOnVRM() {
   Serial.println("Encender VRM");
   pinMode(13, OUTPUT);
   digitalWrite(13, LOW);
   delay(500);
 }
 
+//  Apagar la VRM (5V y 3.3V) e interrupciones
+void turnOffVRM() {
+  Serial.println("Apagar VRM y Modulos");
 
-//  Apagar la VRM (5V y 3.3V)
-void turnOffVRM(){
-  Serial.println("Apagar VRM");
+  // Apagar VRM principal
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
+
+  // Forzar pines de Módem a estado bajo para evitar fugas
+  pinMode(16, OUTPUT);
+  digitalWrite(16, LOW);
+  pinMode(17, OUTPUT);
+  digitalWrite(17, LOW);
+
+  // Forzar pines RS485 a estado bajo
+  pinMode(27, OUTPUT);
+  digitalWrite(27, LOW);
+  pinMode(32, OUTPUT);
+  digitalWrite(32, LOW);
+
+  delay(100);
 }
 
 //  Muestra en serial la causa de booteo
-void print_wakeup_reason(){
+void print_wakeup_reason() {
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
-  switch(wakeup_reason){
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  switch (wakeup_reason) {
+  case ESP_SLEEP_WAKEUP_EXT0:
+    Serial.println("Wakeup caused by external signal using RTC_IO");
+    break;
+  case ESP_SLEEP_WAKEUP_EXT1:
+    Serial.println("Wakeup caused by external signal using RTC_CNTL");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    Serial.println("Wakeup caused by timer");
+    break;
+  case ESP_SLEEP_WAKEUP_TOUCHPAD:
+    Serial.println("Wakeup caused by touchpad");
+    break;
+  case ESP_SLEEP_WAKEUP_ULP:
+    Serial.println("Wakeup caused by ULP program");
+    break;
+  default:
+    Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+    break;
   }
 }

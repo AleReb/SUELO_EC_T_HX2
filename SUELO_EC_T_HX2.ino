@@ -8,7 +8,7 @@ sprintf(enlace,
         airTemperatureLog[i],airHumidityLog[i],soilMoistureLog[i],soilTemperatureLog[i],battery[i],signalValue);
 */
 
-#define stationId 10
+#define stationId 9
 #define firmwareVersion 0.3
 
 #if stationId == 9
@@ -90,6 +90,10 @@ void setup() {
   // --- Modo Debug: si despertó por botón GPIO 0 ---
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {
     debugMode();
+    Serial.println("-> Deep Sleep 30 minutos (desde Debug)");
+    esp_sleep_enable_timer_wakeup(1800000000ULL); // 30 min = 1800 segundos
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);  // Despertar con botón BOOT
+    esp_deep_sleep_start();
   }
 
   // --- Primer encendido: verificación completa ---
