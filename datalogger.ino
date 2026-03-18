@@ -23,6 +23,7 @@ String buildCacheMessage() {
 }
 
 void saveDataToSD() {
+  String fileName = "/DATA" + String(stationId) + ".CSV";
   String historyMessage =
       formatDateTime(now) + "," + String(bateria, 4) + "," +
       String(airTemperature, 1) + "," + String(airHumidity, 1) + "," +
@@ -30,10 +31,12 @@ void saveDataToSD() {
       String(soilMoisture, 1) + "," + String(soilEC2, 1) + "," +
       String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) + "\r\n";
   dataMessage = buildCacheMessage();
-  Serial.print("> Guardando historico: ");
+  Serial.print("> Guardando historico en ");
+  Serial.print(fileName);
+  Serial.print(": ");
   Serial.println(historyMessage);
 
-  appendFile(SD, "/data.csv", historyMessage.c_str());
+  appendFile(SD, fileName.c_str(), historyMessage.c_str());
 }
 
 
@@ -44,14 +47,15 @@ void saveToCache(String msg) {
 }
 
 void checkFile() {
-  // If the data.txt file doesn't exist
-  // Create a file on the SD card and write the data labels
-  Serial.print("  Check data.csv  ");
-  File file = SD.open("/data.csv");
+  String fileName = "/DATA" + String(stationId) + ".CSV";
+  Serial.print("  Check ");
+  Serial.print(fileName);
+  Serial.print("  ");
+  File file = SD.open(fileName);
   if (!file) {
     Serial.print("File doesn't exist  ");
     Serial.print("Creating file...  ");
-    writeFile(SD, "/data.csv",
+    writeFile(SD, fileName.c_str(),
               "FechaHora,Bateria,TemperaturaExterna,HumedadExterna,ElectroconductividadSuelo1,TemperaturaSuelo1,HumedadSuelo1,ElectroconductividadSuelo2,TemperaturaSuelo2,HumedadSuelo2\r\n");
   } else {
     Serial.print("File already exists");

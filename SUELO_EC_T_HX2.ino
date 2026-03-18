@@ -1,37 +1,27 @@
 // ----------------------------------------
 /*
-nota Serial2.begin(4800, SERIAL_8N1, 25, 26); // RO -> IO25, DI -> IO26
-sprintf(enlace,
-enlace sensor 9
-"https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=994,994,996,997,997,997,997,997,998,998,998,1018,1018,1018&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores=Grados
-celcius °C(994),Humedad %(994),Voltaje V(996),Latitud °(997),Longitud
-°(997),Intensidad señal telefónica Adimensional(997),Velocidad_km/h
-km/h(997),Satelites int(997),Electroconductividad uS/cm(998),Grados celcius
-°C(998),Humedad relativa del Suelo % R.H.(998),Electroconductividad
-uS/cm(1018),Grados celcius °C(1018),Humedad relativa del Suelo % R.H.(1018)
-enlace sensor 10
-https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=999,999,1001,1002,1002,1002,1002,1002,1019,1019,1019,1020,1020,1020&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores=Grados
-celcius °C(999),Humedad %(999),Voltaje V(1001),Latitud °(1002),Longitud
-°(1002),Intensidad señal telefónica Adimensional(1002),Velocidad_km/h
-km/h(1002),Satelites int(1002),Electroconductividad uS/cm(1019),Grados celcius
-°C(1019),Humedad relativa del Suelo % R.H.(1019),Electroconductividad
-uS/cm(1020),Grados celcius °C(1020),Humedad relativa del Suelo % R.H.(1020)
-enlace sensor 11
-"http://api-sensores.cmasccp.cl/insertarMedicion?times=%s&idsSensores=%d,%d,%d,%d,%d,%d&idsVariables=%d,%d,%d,%d,%d,%d&valores=%s,%s,%s,%s,%s,%d",
-        timestamp[i],
-        76,76,81,81,86,91,
-        3,6,14,3,4,15,
-        airTemperatureLog[i],airHumidityLog[i],soilMoistureLog[i],soilTemperatureLog[i],battery[i],signalValue);
-        https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=1004,1004,1006,1007,1007,1007,1007,1007,1016,1016,1016,1017,1017,1017&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores=
-        Grados celcius °C(1004),Humedad %(1004),Voltaje V(1006),Latitud
-°(1007),Longitud °(1007),Intensidad señal telefónica
-Adimensional(1007),Velocidad_km/h km/h(1007),Satelites
-int(1007),Electroconductividad uS/cm(1016),Grados celcius °C(1016),Humedad
-relativa del Suelo % R.H.(1016),Electroconductividad uS/cm(1017),Grados celcius
-°C(1017),Humedad relativa del Suelo % R.H.(1017)
+NUEVO ESTANDAR DE ENLACE (Air, Batt, GSM, Soil1, Soil2)
+
+Estacion 9:
+"http://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=994,994,996,997,997,997,997,997,998,998,998,1018,1018,1018&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores="
+
+Estacion 10:
+"http://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=999,999,1001,1002,1002,1002,1002,1002,1019,1019,1019,1020,1020,1020&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores="
+
+Estacion 11:
+"http://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=1004,1004,1006,1007,1007,1007,1007,1007,1016,1016,1016,1017,1017,1017&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores="
+
+Variables:
+3,6: Aire (T,H)
+4: Bateria (V)
+11,12: GPS (Lat,Lon)
+15: Señal (CSQ)
+45,46: GPS (Vel,Sat)
+2,3,14: Suelo (EC,T,H)
 */
 
-#define stationId 9 // la estacion 11 es la con url diferente
+
+#define stationId 10 // la estacion 11 es la con url diferente
 #define firmwareVersion 0.32
 
 #if stationId == 9
@@ -48,8 +38,8 @@ const char *BASE_SERVER_URL =
 #elif stationId == 11
 const char *BASE_SERVER_URL =
     "http://api-sensores.cmasccp.cl/"
-    "insertarMedicion?idsSensores=1004,1004,1016,1016,1016,1006,1007,1007,1007,"
-    "1007,1007,1017,1017,1017&idsVariables=3,6,2,3,14,4,11,12,15,45,46,2,3,14&"
+    "insertarMedicion?idsSensores=1004,1004,1006,1007,1007,1007,1007,1007,1016,"
+    "1016,1016,1017,1017,1017&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&"
     "valores=";
 #else
 #error "STATION_ID no esta definido correctamente para las nuevas estaciones."

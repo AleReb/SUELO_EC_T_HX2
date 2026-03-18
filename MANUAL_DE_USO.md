@@ -26,7 +26,7 @@ Antes de encender o instalar la estación en terreno, asegúrese de contar con l
 4. **Secuencia de Iniciación:**
    - Prenderá los periféricos y hará un escaneo interno (I2C, RTC, SD).
    - Los LEDs parpadearán en secuencia indicando el inicio.
-   - Creará o verificará los archivos `/data.csv` (histórico) y `/cache.csv` (datos por enviar) en la tarjeta SD.
+   - Creará o verificará los archivos `/DATA[ID].csv` (histórico) y `/cache.csv` (datos por enviar) en la tarjeta SD.
    - Tomará la **primera lectura de todos los sensores**.
    - Intentará conectarse a la red GSM/GPRS para enviar este primer dato al servidor.
 5. Luego de este ciclo, el dispositivo entrará en **Deep Sleep (Suspensión Profunda)** para ahorrar energía.
@@ -38,9 +38,9 @@ El equipo se despierta brevemente cada **10 segundos**. Al llegar al ciclo núme
 
 1. Enciende energéticamente los sensores y los lee (Temperatura/Humedad de aire y Temperatura/Humedad/EC de los dos sensores de suelo).
 2. Lee el nivel de la batería.
-3. Almacena la lectura localmente en la tarjeta SD (`data.csv` y `cache.csv`).
+3. Almacena la lectura localmente en la tarjeta SD (`DATA[ID].csv` y `cache.csv`).
 4. Enciende el módem celular y **transmite todos los datos pendientes** en el `cache.csv` hacia el servidor.
-5. Si el envío es exitoso, los datos se borran del `cache.csv` (pero quedan siempre respaldados en `data.csv`).
+5. Si el envío es exitoso, los datos se borran del `cache.csv` (pero quedan siempre respaldados en `DATA[ID].csv`).
 6. Vuelve a dormir por otros 30 minutos.
 
 ## 4. Indicadores Visuales (LEDs)
@@ -70,10 +70,10 @@ Para facilitar la verificación y calibración en terreno sin necesidad de esper
 
 Si requiere obtener los datos de forma manual, simplemente extraiga la tarjeta MicroSD y léala en un computador. 
 
-* **Archivo de interés:** `/data.csv`
+* **Archivo de interés:** `/DATA[ID].csv` (ejemplo: `/DATA9.csv`)
 * **Formato de los datos:**
-  El archivo presenta valores separados por comas que pueden abrirse en Excel, en el siguiente orden:
-  `Epoch Time, Batería (V), TempAire (°C), HumAire (%), EC_Suelo_1 (µS/cm), TempSuelo_1 (°C), HumSuelo_1 (%), EC_Suelo_2 (µS/cm), TempSuelo_2 (°C), HumSuelo_2 (%)`
+  El archivo presenta valores separados por comas:
+  `FechaHora, Batería (V), TempAire (°C), HumAire (%), EC_Suelo_1 (µS/cm), TempSuelo_1 (°C), HumSuelo_1 (%), EC_Suelo_2 (µS/cm), TempSuelo_2 (°C), HumSuelo_2 (%)`
 
 ---
 

@@ -27,7 +27,7 @@ El proyecto está dividido en múltiples archivos `.ino` (compilados juntos por 
 SUELO_EC_T_HX2/
 ├── SUELO_EC_T_HX2.ino  → Núcleo: Configuración de estación (URL), setup(), bucle de deep sleep
 ├── sensors.ino         → Lectura DHT21 (aire) + 2 sensores Modbus RS485 (suelo)
-├── datalogger.ino      → Gestión SD card: data.csv y cache.csv
+├── datalogger.ino      → Gestión SD card: DATA[ID].csv y cache.csv
 ├── modem.ino           → Conexión GSM/GPRS y envío HTTP vía comandos AT
 ├── i2c.ino             → RTC DS3231 y LEDs de estado vía PCF8574 (I2C)
 ├── io.ino              → Control de energía (VRM) y causa de wakeup
@@ -57,7 +57,7 @@ Wakeup (cada 10s)
     ├─ [Si bootCount == 180]  → Cada 30 minutos
     │       ├── Verificar SD / RTC
     │       ├── Leer sensores (DHT + 2x Suelo Modbus)
-    │       ├── Guardar en data.csv y cache.csv
+    │       ├── Guardar en DATA[ID].csv y cache.csv
     │       └── Transmitir GPRS (vaciar cache)
     │
     └── Deep sleep 10 segundos → repite
@@ -86,14 +86,15 @@ Wakeup (cada 10s)
 
 ### `datalogger.ino` — SD Card
 - SD conectada con CS en pin 4.
-- **`/data.csv`**: log histórico completo (append, nunca se borra).
+- **`/DATA[ID].csv`**: log histórico completo (append, nunca se borra). Ejemplo: `/DATA9.csv`.
 - **`/cache.csv`**: datos pendientes de envío (se borra después de transmitir exitosamente).
-- Formato CSV actualizado: incluye los 3 parámetros de ambos sensores Modbus (`Epoch Time, Battery, TempAire, HumAire, EC_1, TempSuelo_1, HumSuelo_1, EC_2, TempSuelo_2, HumSuelo_2`).
+- Formato CSV: `FechaHora, Bateria, TempAire, HumAire, EC_1, TempSuelo_1, HumSuelo_1, EC_2, TempSuelo_2, HumSuelo_2`.
 
 ### `modem.ino` — Comunicación GPRS
 - Modem en Serial1 (pines 17/16), 115200 baud.
 - APN configurado: `gigsky-02`.
 - Transmite los datos mediante peticiones HTTP GET usando comandos AT basándose en la `BASE_SERVER_URL` de la estación configurada.
+- **Estándar de envío**: Air (3,6) → Battery (4) → GPS (11,12) → Signal (15) → GPS (45,46) → Soil1 (2,3,14) → Soil2 (2,3,14).
 
 ### `i2c.ino` — RTC y LEDs
 - **RTC DS3231**: provee timestamp (Epoch Unix).

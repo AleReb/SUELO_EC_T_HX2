@@ -133,9 +133,9 @@ bool sendCurrentData() {
   char url[512];
   int urlLen = snprintf(
       url, sizeof(url),
-      "%s%.1f,%.1f,%.1f,%.1f,%.1f,%.4f,0,0,%d,0,0,%.1f,%.1f,%.1f&times=%lu",
-      BASE_SERVER_URL, airTemperature, airHumidity, soilEC, soilTemperature,
-      soilMoisture, bateria, signalValue, soilEC2, soilTemperature2,
+      "%s%.1f,%.1f,%.4f,0,0,%d,0,0,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f&times=%lu",
+      BASE_SERVER_URL, airTemperature, airHumidity, bateria, signalValue,
+      soilEC, soilTemperature, soilMoisture, soilEC2, soilTemperature2,
       soilMoisture2, (unsigned long)now.unixtime());
   if (urlLen < 0 || urlLen >= (int)sizeof(url)) {
     Serial.println("URL actual demasiado larga o invalida");
@@ -330,10 +330,11 @@ bool sendCache() {
 
     char enlace[512];
     int enlaceLen = snprintf(
-        enlace, sizeof(enlace), "%s%s,%s,%s,%s,%s,%s,0,0,%d,0,0,%s,%s,%s&times=%s",
-        BASE_SERVER_URL, airTemperatureLog[i], airHumidityLog[i], soilECLog[i],
-        soilTemperatureLog[i], soilMoistureLog[i], battery[i], signalValue,
-        soilEC2Log[i], soilTemperature2Log[i], soilMoisture2Log[i], timestamp[i]);
+        enlace, sizeof(enlace), "%s%s,%s,%s,0,0,%d,0,0,%s,%s,%s,%s,%s,%s&times=%s",
+        BASE_SERVER_URL, airTemperatureLog[i], airHumidityLog[i], battery[i],
+        signalValue, soilECLog[i], soilTemperatureLog[i], soilMoistureLog[i],
+        soilEC2Log[i], soilTemperature2Log[i], soilMoisture2Log[i],
+        timestamp[i]);
     if (enlaceLen < 0 || enlaceLen >= (int)sizeof(enlace)) {
       Serial.println("URL de cache demasiado larga, se conserva para reintento");
       return false;
