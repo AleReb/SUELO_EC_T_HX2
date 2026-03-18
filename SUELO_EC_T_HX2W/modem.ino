@@ -1,53 +1,20 @@
+/*
+  APIs
 
-//  APIs 
-
-bool comandoATContiene(const char *ATcommand, const char *resp1, const char *resp2,
-                       unsigned int tiempo) {
-  int x = 0;
-  char respuesta[160];
-  unsigned long anterior;
-
-  memset(respuesta, '\0', sizeof(respuesta));
-  delay(100);
-  while (myModem.available() > 0)
-    myModem.read();
-
-  myModem.println(ATcommand);
-  anterior = millis();
-  do {
-    if (myModem.available() != 0) {
-      char c = myModem.read();
-      if (x < sizeof(respuesta) - 1) {
-        respuesta[x] = c;
-        x++;
-      }
-      if (strstr(respuesta, resp1) != NULL ||
-          (resp2 != NULL && strstr(respuesta, resp2) != NULL)) {
-        respuesta[x] = '\0';
-        Serial.println(respuesta);
-        return true;
-      }
-    }
-  } while ((millis() - anterior) < tiempo);
-
-  respuesta[x] = '\0';
-  Serial.println(respuesta);
-  return false;
-}
-
-bool waitForHttpSuccess(unsigned int timeoutMs) {
-  return comandoATContiene("AT+HTTPACTION=0", "+HTTPACTION: 0,200,",
-                           "+HTTPACTION: 0,201,", timeoutMs);
-}
-
-bool isRegisteredOnNetwork() {
-  if (!comandoATContiene("AT+CREG?", "+CREG: 0,1", "+CREG: 0,5", 1000))
-    return false;
-
-  return comandoATContiene("AT+CGREG?", "+CGREG: 0,1", "+CGREG: 0,5", 1000);
-}
+  SOIL-01:
+  https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=76,76,81,86&idsVariables=3,6,14,14&valores=1,2,3,4
+  SOIL-02:
+  https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=77,77,82,87&idsVariables=3,6,14,14&valores=1,2,3,4
+  SOIL-03:
+  https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=78,78,83,88&idsVariables=3,6,14,14&valores=1,2,3,4
+  SOIL-04:
+  https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=79,79,84,89&idsVariables=3,6,14,14&valores=1,2,3,4
+  SOIL-05:
+  https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=80,80,85,90&idsVariables=3,6,14,14&valores=1,2,3,4
+*/
 
 void sendData() {
+  unsigned long modemInstanceStartTime = millis();
   Serial.println("> Send Data");
   turnOnVRM();
   muxYellowLed();
@@ -130,36 +97,27 @@ void sendData() {
 }
 
 bool sendCurrentData() {
-  char url[512];
-  int urlLen = snprintf(
-      url, sizeof(url),
-      "%s%.1f,%.1f,%.1f,%.1f,%.1f,%.4f,0,0,%d,0,0,%.1f,%.1f,%.1f&times=%lu",
-      BASE_SERVER_URL, airTemperature, airHumidity, soilEC, soilTemperature,
-      soilMoisture, bateria, signalValue, soilEC2, soilTemperature2,
-      soilMoisture2, (unsigned long)now.unixtime());
-  if (urlLen < 0 || urlLen >= (int)sizeof(url)) {
-    Serial.println("URL actual demasiado larga o invalida");
-    return false;
-  }
+  String url = String(BASE_SERVER_URL) + String(airTemperature, 1) + "," +
+               String(airHumidity, 1) + "," + String(soilEC, 1) + "," +
+               String(soilTemperature, 1) + "," + String(soilMoisture, 1) +
+               "," + String(bateria, 4) + ",0,0," + String(signalValue) +
+               ",0,0," + String(soilEC2, 1) + "," +
+               String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) +
+               "&times=" + String(now.unixtime());
 
   Serial.println("\n--- Enviando Dato Actual ---");
   Serial.print("URL: ");
   Serial.println(url);
 
-  char atCommand[640];
-  int atCommandLen = snprintf(atCommand, sizeof(atCommand),
-                              "AT+HTTPPARA=\"URL\",\"%s\"", url);
-  if (atCommandLen < 0 || atCommandLen >= (int)sizeof(atCommand)) {
-    Serial.println("Comando AT demasiado largo");
-    return false;
-  }
+  String atCommand = "AT+HTTPPARA=\"URL\",\"" + url + "\"";
   // Evitar sobrecargar Serial con el commando tan largo, solo url
-  comandoAT(atCommand, "OK", 1000);
+  comandoAT(atCommand.c_str(), "OK", 1000);
   delay(1000);
 
-  if (waitForHttpSuccess(10000)) {
-    Serial.println("Envio Exitoso");
-    comandoAT("AT+HTTPREAD", "any", 1000);
+  if (comandoAT("AT+HTTPACTION=0", "\r\nOK\r\n\r\n+HTTPACTION: 0,201,66\r\n",
+                10000)) {
+    Serial.println("Envio Exitoso (201)");
+    comandoAT("AT+HTTPREAD=66", "any", 1000);
     return true;
   } else {
     Serial.println("Falla en envio (HTTPACTION)");
@@ -328,36 +286,30 @@ bool sendCache() {
     Serial.print(i);
     Serial.println(":");
 
-    char enlace[512];
-    int enlaceLen = snprintf(
-        enlace, sizeof(enlace), "%s%s,%s,%s,%s,%s,%s,0,0,%d,0,0,%s,%s,%s&times=%s",
-        BASE_SERVER_URL, airTemperatureLog[i], airHumidityLog[i], soilECLog[i],
-        soilTemperatureLog[i], soilMoistureLog[i], battery[i], signalValue,
-        soilEC2Log[i], soilTemperature2Log[i], soilMoisture2Log[i], timestamp[i]);
-    if (enlaceLen < 0 || enlaceLen >= (int)sizeof(enlace)) {
-      Serial.println("URL de cache demasiado larga, se conserva para reintento");
-      return false;
-    }
+    char enlace[600];
+
+    sprintf(enlace, "%s%s,%s,%s,%s,%s,%s,0,0,%d,0,0,%s,%s,%s&times=%s",
+            BASE_SERVER_URL, airTemperatureLog[i], airHumidityLog[i],
+            soilECLog[i], soilTemperatureLog[i], soilMoistureLog[i], battery[i],
+            signalValue, soilEC2Log[i], soilTemperature2Log[i],
+            soilMoisture2Log[i], timestamp[i]);
 
     // https://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=76,76,81,86&idsVariables=3,6,14,14&valores=1,2,3,4
 
     Serial.print("URL: ");
     Serial.println(enlace);
 
-    char atCommand[640];
-    int atCommandLen = snprintf(atCommand, sizeof(atCommand),
-                                "AT+HTTPPARA=\"URL\",\"%s\"", enlace);
-    if (atCommandLen < 0 || atCommandLen >= (int)sizeof(atCommand)) {
-      Serial.println("Comando AT de cache demasiado largo");
-      return false;
-    }
+    char atCommand[700];
+
+    sprintf(atCommand, "AT+HTTPPARA=\"URL\",\"%s\"", enlace);
     Serial.println();
     Serial.print(atCommand);
     Serial.println();
     comandoAT(atCommand, "OK", 1000);
     delay(1000);
 
-    if (waitForHttpSuccess(10000))
+    if (comandoAT("AT+HTTPACTION=0", "\r\nOK\r\n\r\n+HTTPACTION: 0,201,66\r\n",
+                  10000))
       Serial.println("AT+HTTPACTION CHECK");
     else {
       muxRedLed();
@@ -366,7 +318,7 @@ bool sendCache() {
     }
 
     delay(1000);
-    comandoAT("AT+HTTPREAD", "any", 1000);
+    comandoAT("AT+HTTPREAD=66", "any", 1000);
   }
 
   clearFile(SD, "/cache.csv");
@@ -377,7 +329,9 @@ bool sendCache() {
 bool connectGSM() {
   if (!comandoAT("AT", "\r\nOK\r\n", 1000))
     return false;
-  if (!isRegisteredOnNetwork())
+  if (!comandoAT("AT+CREG?", "\r\n+CREG: 0,5\r\n\r\nOK\r\n", 1000))
+    return false;
+  if (!comandoAT("AT+CGREG?", "\r\n+CGREG: 0,5\r\n\r\nOK\r\n", 1000))
     return false;
   return true;
 }
@@ -407,7 +361,7 @@ bool comandoAT(const char *ATcommand, const char *resp_correcta,
                unsigned int tiempo) {
   int x = 0;
   bool correcto = false;
-  char respuesta[512];
+  char respuesta[100];
   unsigned long anterior;
 
   if (strcmp(resp_correcta, "any") == 0) {
@@ -419,7 +373,7 @@ bool comandoAT(const char *ATcommand, const char *resp_correcta,
       Serial.print((char)myModem.read());
     correcto = true;
   } else {
-    memset(respuesta, '\0', sizeof(respuesta));
+    memset(respuesta, '\0', 100);
     delay(100);
     while (myModem.available() > 0)
       myModem.read();
@@ -429,7 +383,7 @@ bool comandoAT(const char *ATcommand, const char *resp_correcta,
     do {
       if (myModem.available() != 0) {
         char c = myModem.read();
-        if (x < (int)sizeof(respuesta) - 1) {
+        if (x < sizeof(respuesta) - 1) {
           respuesta[x] = c;
           x++;
         }

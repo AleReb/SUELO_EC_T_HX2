@@ -1,41 +1,22 @@
 void readCache() {
-  Serial.println("> Leer cache: ");
+  Serial.println("> Leer Caché: ");
   int filas = countFileRows(SD, "/cache.csv");
   Serial.println(filas);
   readFile(SD, "/cache.csv");
 }
 
-String formatDateTime(const DateTime &timestamp) {
-  char buffer[20];
-  snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d %02d:%02d:%02d",
-           timestamp.year(), timestamp.month(), timestamp.day(),
-           timestamp.hour(), timestamp.minute(), timestamp.second());
-  return String(buffer);
-}
-
-String buildCacheMessage() {
-  return String(now.unixtime()) + "," + String(bateria, 4) + "," +
-         String(airTemperature, 1) + "," + String(airHumidity, 1) + "," +
-         String(soilEC, 1) + "," + String(soilTemperature, 1) + "," +
-         String(soilMoisture, 1) + "," + String(soilEC2, 1) + "," +
-         String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) +
-         "\r\n";
-}
-
 void saveDataToSD() {
-  String historyMessage =
-      formatDateTime(now) + "," + String(bateria, 4) + "," +
-      String(airTemperature, 1) + "," + String(airHumidity, 1) + "," +
-      String(soilEC, 1) + "," + String(soilTemperature, 1) + "," +
-      String(soilMoisture, 1) + "," + String(soilEC2, 1) + "," +
-      String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) + "\r\n";
-  dataMessage = buildCacheMessage();
-  Serial.print("> Guardando historico: ");
-  Serial.println(historyMessage);
+  dataMessage = String(now.unixtime()) + "," + String(bateria, 4) + "," +
+                String(airTemperature, 1) + "," + String(airHumidity, 1) + "," +
+                String(soilEC, 1) + "," + String(soilTemperature, 1) + "," +
+                String(soilMoisture, 1) + "," + String(soilEC2, 1) + "," +
+                String(soilTemperature2, 1) + "," + String(soilMoisture2, 1) +
+                "\r\n";
+  Serial.print("> Guardando histórico: ");
+  Serial.println(dataMessage);
 
-  appendFile(SD, "/data.csv", historyMessage.c_str());
+  appendFile(SD, "/data.csv", dataMessage.c_str());
 }
-
 
 void saveToCache(String msg) {
   Serial.print("> Guardando en CACHE (Fallback): ");
@@ -51,8 +32,7 @@ void checkFile() {
   if (!file) {
     Serial.print("File doesn't exist  ");
     Serial.print("Creating file...  ");
-    writeFile(SD, "/data.csv",
-              "FechaHora,Bateria,TemperaturaExterna,HumedadExterna,ElectroconductividadSuelo1,TemperaturaSuelo1,HumedadSuelo1,ElectroconductividadSuelo2,TemperaturaSuelo2,HumedadSuelo2\r\n");
+    writeFile(SD, "/data.csv", "Epoch Time, Battery\r\n");
   } else {
     Serial.print("File already exists");
   }
@@ -273,7 +253,7 @@ void clearCache() {
     createFile(SD, "/cache.csv");
     File file = SD.open("/cache.csv");
     if (!file) {
-      Serial.println("Error creando archivo Cache");
+      Serial.println("Error creando archivo Caché");
     }
   }
   file.close();
@@ -281,7 +261,7 @@ void clearCache() {
 }
 
 void createFile(fs::FS &fs, const char *path) {
-  Serial.printf("Creando archivo vacio: %s  ", path);
+  Serial.printf("Creando archivo vacío: %s  ", path);
   File file = fs.open(path, FILE_WRITE);
   if (!file) {
     Serial.print("> Error creando el archivo");
