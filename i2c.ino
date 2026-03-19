@@ -1,9 +1,11 @@
 //  Verifica la conexión del reloj
 void checkRTC(){
+
   if (! rtc.begin()) {
     Serial.println("Couldn't find RTC");
     Serial.flush();
   }
+  //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));//solo queda para actualizar rtc si no tiene la fecha correcta
 }
 
 //  Consulta y muestra la hora del RTC
@@ -32,6 +34,12 @@ void blinkGreenLed(){
   delay(200);
   muxOffLed();
   delay(200);
+}
+
+void blinkYellowLed(){
+  muxYellowLed();
+  delay(1000);  // 1 segundo encendido
+  muxOffLed();
 }
 
 void muxAllLed(){

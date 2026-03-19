@@ -65,6 +65,11 @@ void sendData() {
   unsigned long startWaitTime = millis();
   while (!myModem.available()) {
     // Espera que el modem entregue su estado inicial
+    if (burstRequested) {
+      Serial.println(">>> Burst solicitado! Abortando espera modem...");
+      modemConnected = false;
+      break;
+    }
     if (millis() - startWaitTime > 30000) {
       Serial.println("El modem no contesta");
       modemConnected = false;
@@ -79,6 +84,10 @@ void sendData() {
     }
 
     for (int i = 0; i < 20; i++) { // Verifica conexión
+      if (burstRequested) {
+        Serial.println(">>> Burst solicitado! Abortando conexión GSM...");
+        break;
+      }
       if (connectGSM()) {
         modemReady = true;
         break;

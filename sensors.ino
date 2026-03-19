@@ -170,19 +170,52 @@ void readSensors() {
 }
 
 // =============================================================
-//  debugMode()  —  Modo debug activado por botón GPIO 0
-//  Lee y muestra sensores cada 30 segundos durante 5 minutos
-//  Guarda cada lectura en la SD
+//  waitWithYellowBlink()  —  Espera con parpadeo amarillo
+//  Parpadea LED amarillo 1 segundo cada 10 segundos durante
+//  el tiempo indicado en milisegundos
 // =============================================================
-void debugMode() {
+void waitWithYellowBlink(unsigned long waitMs) {
+  unsigned long start = millis();
+  unsigned long blinkInterval = 10000; // 10 segundos entre parpadeos
+  unsigned long lastBlink = start;
+
+  muxOffLed(); // Apagar LED al inicio de la espera
+
+  while ((millis() - start) < waitMs) {
+    // Cada 10 segundos, parpadear amarillo 1 segundo
+    if ((millis() - lastBlink) >= blinkInterval) {
+      muxYellowLed();
+     Serial.println("prendiendo amarillo... esperando 10 segundos");
+      delay(1000); // 1 segundo encendido
+      muxOffLed();
+      lastBlink = millis();
+    }
+    delay(100); // Pequeña pausa para no saturar el CPU
+  }
+}
+
+// =============================================================
+//  burstMode()  —  Modo burst activado por botón GPIO 0
+//  Lee y guarda sensores cada 5 minutos durante 3 horas
+//  Parpadea LED amarillo cada 10s como indicador de modo burst
+//  LED verde encendido durante cada guardado
+// =============================================================
+void burstMode() {
+  muxCycleLeds();
+  muxCycleLeds();
+  const int totalCiclos = 36;                    // 36 lecturas
+  const unsigned long intervaloMs = 300000UL;    // 5 minutos = 300000 ms
+
   Serial.println("\n\r==================================================");
-  Serial.println("  >>> MODO DEBUG ACTIVADO (Boton GPIO 0) <<<");
-  Serial.println("  Leyendo sensores cada 30s durante 5 minutos");
+  Serial.println("  >>> MODO BURST ACTIVADO (Boton GPIO 0) <<<");
+  Serial.print("  Guardando cada 5 min durante 3 horas (");
+  Serial.print(totalCiclos);
+  Serial.println(" lecturas)");
   Serial.println("==================================================\n\r");
 
   turnOnVRM();
   Wire.begin();
-  muxYellowLed(); // Led amarillo = modo debug
+  blinkYellowLed(); // Parpadeo amarillo = modo burst activo
   checkRTC();
   fastCheckSD();
   checkFile();
@@ -197,11 +230,15 @@ void debugMode() {
   soilSensor2.preTransmission(preTransmission);
   soilSensor2.postTransmission(postTransmission);
 
-  // 5 minutos = 300 segundos / 30 segundos = 10 lecturas
-  for (int ciclo = 1; ciclo <= 10; ciclo++) {
-    Serial.print("\n\r--- Debug Lectura ");
+  for (int ciclo = 1; ciclo <= totalCiclos; ciclo++) {
+    Serial.print("\n\r--- Burst Lectura ");
     Serial.print(ciclo);
-    Serial.println(" / 10 ---");
+    Serial.print(" / ");
+    Serial.print(totalCiclos);
+    Serial.println(" ---");
+
+    // LED verde = leyendo/guardando
+    muxGreenLed();
 
     // Batería
     bateria = analogRead(33) * 0.004992;
@@ -229,19 +266,20 @@ void debugMode() {
     // Guardar en SD
     saveDataToSD();
 
-    // Parpadeo verde = lectura OK
+    // Parpadeo verde = guardado OK
+    muxOffLed();
+    delay(200);
     blinkGreenLed();
-    muxYellowLed(); // Volver a amarillo
 
-    // Esperar 30 segundos (excepto en la última lectura)
-    if (ciclo < 10) {
-      Serial.println("Esperando 30 segundos...");
-      delay(30000);
+    // Esperar 5 minutos con parpadeo amarillo (excepto en la última lectura)
+    if (ciclo < totalCiclos) {
+      Serial.println("Esperando 5 minutos (parpadeo amarillo cada 10s)...");
+      waitWithYellowBlink(intervaloMs);
     }
   }
 
   Serial.println("\n\r==================================================");
-  Serial.println("  >>> FIN MODO DEBUG <<<");
+  Serial.println("  >>> FIN MODO BURST (3 horas completadas) <<<");
   Serial.println("==================================================\n\r");
 
   for (int i = 0; i < 5; i++)

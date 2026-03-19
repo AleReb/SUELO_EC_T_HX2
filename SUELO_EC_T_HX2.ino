@@ -1,192 +1,490 @@
 // ----------------------------------------
 /*
-NUEVO ESTANDAR DE ENLACE (Air, Batt, GSM, Soil1, Soil2)
+NEW LINK STANDARD (Air, Batt, GSM, Soil1, Soil2)
 
-Estacion 9:
+Station 9:
 "http://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=994,994,996,997,997,997,997,997,998,998,998,1018,1018,1018&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores="
 
-Estacion 10:
+Station 10:
 "http://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=999,999,1001,1002,1002,1002,1002,1002,1019,1019,1019,1020,1020,1020&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores="
 
-Estacion 11:
+Station 11:
 "http://api-sensores.cmasccp.cl/insertarMedicion?idsSensores=1004,1004,1006,1007,1007,1007,1007,1007,1016,1016,1016,1017,1017,1017&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores="
 
 Variables:
-3,6: Aire (T,H)
-4: Bateria (V)
+3,6: Air (T,H)
+4: Battery (V)
 11,12: GPS (Lat,Lon)
-15: Señal (CSQ)
-45,46: GPS (Vel,Sat)
-2,3,14: Suelo (EC,T,H)
+15: Signal (CSQ)
+45,46: GPS (Speed,Sats)
+2,3,14: Soil (EC,T,H)
 */
+// ----------------------------------------
 
-
-#define stationId 10 // la estacion 11 es la con url diferente
-#define firmwareVersion 0.32
+#define stationId 11
+#define firmwareVersion 0.40
 
 #if stationId == 9
 const char *BASE_SERVER_URL =
-    "http://api-sensores.cmasccp.cl/"
-    "insertarMedicion?idsSensores=994,994,996,997,997,997,997,997,998,998,998,"
-    "1018,1018,1018&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores=";
+  "http://api-sensores.cmasccp.cl/"
+  "insertarMedicion?idsSensores=994,994,996,997,997,997,997,997,998,998,998,"
+  "1018,1018,1018&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&valores=";
 #elif stationId == 10
 const char *BASE_SERVER_URL =
-    "http://api-sensores.cmasccp.cl/"
-    "insertarMedicion?idsSensores=999,999,1001,1002,1002,1002,1002,1002,1019,"
-    "1019,1019,1020,1020,1020&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&"
-    "valores=";
+  "http://api-sensores.cmasccp.cl/"
+  "insertarMedicion?idsSensores=999,999,1001,1002,1002,1002,1002,1002,1019,"
+  "1019,1019,1020,1020,1020&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&"
+  "valores=";
 #elif stationId == 11
 const char *BASE_SERVER_URL =
-    "http://api-sensores.cmasccp.cl/"
-    "insertarMedicion?idsSensores=1004,1004,1006,1007,1007,1007,1007,1007,1016,"
-    "1016,1016,1017,1017,1017&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&"
-    "valores=";
+  "http://api-sensores.cmasccp.cl/"
+  "insertarMedicion?idsSensores=1004,1004,1006,1007,1007,1007,1007,1007,1016,"
+  "1016,1016,1017,1017,1017&idsVariables=3,6,4,11,12,15,45,46,2,3,14,2,3,14&"
+  "valores=";
 #else
-#error "STATION_ID no esta definido correctamente para las nuevas estaciones."
+#error "stationId is not defined correctly."
 #endif
 
 // ----------------------------------------
-
-// --- PINOUT ---
+// PINOUT
+// ----------------------------------------
 #define myModem Serial1
 #define dhtSensorPin 14
 #define RS485_DE 27
 #define RS485_RE 32
+#define BURST_BUTTON_PIN 0
 
-// --- LIBRERIAS ---
-#include "DHT.h" // Instalar
+// ----------------------------------------
+// LIBRARIES
+// ----------------------------------------
+#include "DHT.h"
 #include "FS.h"
-#include "RTClib.h" // Instalar
+#include "RTClib.h"
 #include "SD.h"
 #include "SPI.h"
 #include "driver/rtc_io.h"
 #include "soc/rtc.h"
 #include "soc/rtc_cntl_reg.h"
-#include <Adafruit_PCF8574.h> // Instalar
-#include <ModbusMaster.h>     // Instalar
+#include <Adafruit_PCF8574.h>
+#include <ModbusMaster.h>
 #include <Wire.h>
 
-// Instancias
-ModbusMaster soilSensor;  // Sensor 1 (Modbus ID 1)
-ModbusMaster soilSensor2; // Sensor 2 (Modbus ID 2)
+// ----------------------------------------
+// INSTANCES
+// ----------------------------------------
+ModbusMaster soilSensor;
+ModbusMaster soilSensor2;
 Adafruit_PCF8574 mux;
 RTC_DS3231 rtc;
 DHT dht(dhtSensorPin, DHT21);
 
-// Variables globales
+// ----------------------------------------
+// GLOBAL DATA
+// ----------------------------------------
 DateTime now;
 String dataMessage;
-float airTemperature, airHumidity;
-float soilTemperature, soilMoisture, soilEC;    // Sensor 1
-float soilTemperature2, soilMoisture2, soilEC2; // Sensor 2
-float bateria;
-int signalValue;
 
-// Flags
+float airTemperature = -1.0f;
+float airHumidity = -1.0f;
+
+float soilTemperature = -1.0f;
+float soilMoisture = -1.0f;
+float soilEC = -1.0f;
+
+float soilTemperature2 = -1.0f;
+float soilMoisture2 = -1.0f;
+float soilEC2 = -1.0f;
+
+float bateria = -1.0f;
+int signalValue = -1;
+
+// ----------------------------------------
+// FLAGS
+// ----------------------------------------
 bool modemReady = false;
+bool burstModeRunning = false;
+bool peripheralsOn = false;
+bool i2cReady = false;
+bool rtcReady = false;
+bool sdReady = false;
+bool sensorsReady = false;
 
-// Flag no volátil
+volatile bool burstRequested = false;
 RTC_DATA_ATTR bool firstBoot = true;
 
+// ----------------------------------------
 // APN
+// ----------------------------------------
 char apn[] = "gigsky-02";
 // char apn[] = "wap.tmovil.cl";
 // char apn[] = "bam.entelpcs.cl";
 
-////////////////////////////////////////////////////////////////////////////////
+// -----------------------------------------------------------------------------
+// FORWARD DECLARATIONS
+// -----------------------------------------------------------------------------
+void printSystemStatus();
+void setupBurstButton();
+bool isBurstButtonPressed();
+bool shouldEnterBurstMode();
+void clearBurstRequest();
+void IRAM_ATTR onBurstButton();
+bool handleBurstRequest(const char *context);
+void runBurstMode();
+void prepareDeepSleep30Min();
+void safeTurnOnPeripherals();
+void safeInitI2C();
+void safeCheckRTC();
+void safeCheckSD();
+void safeCheckFiles();
+void safeCheckTime();
+void safeCheckSensors();
+void safeReadSensors();
+void safeSaveDataToSD();
+void showBootBanner();
+void showCycleBanner();
+void detachBurstInterruptSafe();
 
-void setup() {
-  Serial.begin(115200);
-  Serial.setRxBufferSize(1024);
-  print_wakeup_reason(); // Causa del reinicio
+// -----------------------------------------------------------------------------
+// ISR
+// -----------------------------------------------------------------------------
+void IRAM_ATTR onBurstButton() {
+  burstRequested = true;
+}
 
-  // --- Modo Debug: si despertó por botón GPIO 0 ---
-  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {
-    debugMode();
-    Serial.println("-> Deep Sleep 30 minutos (desde Debug)");
-    esp_sleep_enable_timer_wakeup(1800000000ULL); // 30 min = 1800 segundos
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);  // Despertar con botón BOOT
-    esp_deep_sleep_start();
+// -----------------------------------------------------------------------------
+// BURST BUTTON / REQUEST MANAGEMENT
+// -----------------------------------------------------------------------------
+void setupBurstButton() {
+  pinMode(BURST_BUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BURST_BUTTON_PIN), onBurstButton, FALLING);
+}
+
+bool isBurstButtonPressed() {
+  return digitalRead(BURST_BUTTON_PIN) == LOW;
+}
+
+bool shouldEnterBurstMode() {
+  return burstRequested || isBurstButtonPressed();
+}
+
+void clearBurstRequest() {
+  noInterrupts();
+  burstRequested = false;
+  interrupts();
+}
+
+void detachBurstInterruptSafe() {
+  detachInterrupt(digitalPinToInterrupt(BURST_BUTTON_PIN));
+}
+
+bool handleBurstRequest(const char *context) {
+  if (!shouldEnterBurstMode()) {
+    return false;
   }
 
-  // --- Primer encendido: verificación completa ---
-  if (firstBoot) {
-    Serial.print("\n\n --- Estacion de Monitoreo SUELO --- \n\n");
-    Serial.print(" ------------------ id ");
-    Serial.print(stationId);
-    Serial.print(" | fw ");
-    Serial.print(firmwareVersion);
-    Serial.print(" -------------------- \n\n");
+  Serial.println();
+  Serial.println("==================================================");
+  Serial.println("BURST REQUEST DETECTED");
+  Serial.print("Context: ");
+  Serial.println(context);
+  Serial.println("Normal transmission will be skipped.");
+  Serial.println("==================================================");
 
-    Serial.println(
-        "\n\r\n\r--------------------------------------------------");
-    Serial.println("-> First Boot");
-    turnOnVRM();     // Enciende perifericos I2C
-    Wire.begin();    // Activa puerto I2C
-    scanAddresses(); // Verificamos puertos I2C
-    muxCycleLeds();  // Secuencia de Leds de booteo
-    checkSD();       // Verificamos tarjeta SD
-    checkFile();     // Verificamos que existan los CSV
-    checkRTC();      // Verificamos el funcionamiento del RTC
-    checkTime();     // Vemos la hora
-    checkSensors();  // Verifica lectura sensores
-    delay(2000);
-    readSensors();  // Leemos sensores
-    saveDataToSD(); // Guardamos datos en SD
-    sendData();     // Transmitimos datos a servidor
-    turnOffVRM();   // Apaga placa hijo
-    firstBoot = false;
-    Serial.println("\n\r-> End First Boot");
-    Serial.println(
-        "--------------------------------------------------\n\r\n\r");
-  }
+  clearBurstRequest();
+  burstModeRunning = true;
 
-  // =============================================================
-  //  Ciclo Normal: Lee → Guarda → Envía → Duerme 30 minutos
-  // =============================================================
+  safeTurnOnPeripherals();
+  safeInitI2C();
+
+  muxCycleLeds();
+  muxCycleLeds();
+  muxCycleLeds();
+
+  runBurstMode();
+
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+// SAFE WRAPPERS / STATUS
+// -----------------------------------------------------------------------------
+void safeTurnOnPeripherals() {
+  turnOnVRM();
+  peripheralsOn = true;
+}
+
+void safeInitI2C() {
+  Wire.begin();
+  i2cReady = true;
+}
+
+void safeCheckRTC() {
+  checkRTC();
+  rtcReady = true;
+}
+
+void safeCheckSD() {
+  checkSD();
+  sdReady = true;
+}
+
+void safeCheckFiles() {
+  checkFile();
+}
+
+void safeCheckTime() {
+  checkTime();
+}
+
+void safeCheckSensors() {
+  checkSensors();
+  sensorsReady = true;
+}
+
+void safeReadSensors() {
+  readSensors();
+  sensorsReady = true;
+}
+
+void safeSaveDataToSD() {
+  saveDataToSD();
+}
+
+void printSystemStatus() {
+  Serial.println("--------------- SYSTEM STATUS ----------------");
+  Serial.print("Peripherals ON: ");
+  Serial.println(peripheralsOn ? "YES" : "NO");
+  Serial.print("I2C ready:      ");
+  Serial.println(i2cReady ? "YES" : "NO");
+  Serial.print("RTC ready:      ");
+  Serial.println(rtcReady ? "YES" : "NO");
+  Serial.print("SD ready:       ");
+  Serial.println(sdReady ? "YES" : "NO");
+  Serial.print("Sensors ready:  ");
+  Serial.println(sensorsReady ? "YES" : "NO");
+  Serial.print("First boot:     ");
+  Serial.println(firstBoot ? "YES" : "NO");
+  Serial.print("Burst pending:  ");
+  Serial.println(shouldEnterBurstMode() ? "YES" : "NO");
+  Serial.println("---------------------------------------------");
+}
+
+// -----------------------------------------------------------------------------
+// UI / BANNERS
+// -----------------------------------------------------------------------------
+void showBootBanner() {
+  Serial.print("\n\n --- Soil Monitoring Station --- \n\n");
+  Serial.print(" ------------------ id ");
+  Serial.print(stationId);
+  Serial.print(" | fw ");
+  Serial.print(firmwareVersion);
+  Serial.print(" -------------------- \n\n");
+}
+
+void showCycleBanner() {
   Serial.println("\n\r--------------------------------------------------");
-  Serial.println("-> Ciclo Normal");
-  Serial.print("Estacion ");
+  Serial.println("-> Normal Cycle");
+  Serial.print("Station ");
   Serial.print(stationId);
   Serial.print(" | Firmware ");
   Serial.println(firmwareVersion);
+}
 
-  // Encender perifericos (VRM enciende todos los sensores)
-  turnOnVRM();
-  Wire.begin();
-  muxAllLed();
-  delay(250);
-  muxOffLed();
+// -----------------------------------------------------------------------------
+// BURST EXECUTION
+// -----------------------------------------------------------------------------
+void runBurstMode() {
+  Serial.println("Starting burst mode now...");
+  burstMode();
 
-  // Ver la hora
-  checkRTC();
-  checkTime();
-  now = rtc.now();
+  Serial.println("Burst mode finished.");
+  printSystemStatus();
+}
 
-  // Leer y mostrar TODOS los sensores
-  readSensors(); // DHT + Suelo1 + Suelo2 + Batería
-
-  // Guardar en SD
-  muxGreenLed();
-  fastCheckSD();
-  checkFile();
-  saveDataToSD();
-
-  // Enviar al servidor
-  sendData();
-
-  for (int i = 0; i < 3; i++)
-    blinkGreenLed();
-
-  // Apagar y dormir 30 minutos
-  turnOffVRM();
-  Serial.println("-> Deep Sleep 30 minutos");
+// -----------------------------------------------------------------------------
+// SLEEP
+// -----------------------------------------------------------------------------
+void prepareDeepSleep30Min() {
+  Serial.println("-> Deep Sleep 30 minutes");
   Serial.println("--------------------------------------------------\n\r");
-  esp_sleep_enable_timer_wakeup(1800000000ULL); // 30 min = 1800 segundos
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);  // Despertar con botón BOOT
+
+  detachBurstInterruptSafe();
+
+  esp_sleep_enable_timer_wakeup(1800000000ULL);
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, 0);
   esp_deep_sleep_start();
 }
 
+// -----------------------------------------------------------------------------
+// SETUP
+// -----------------------------------------------------------------------------
+void setup() {
+  Serial.begin(115200);
+  Serial.setRxBufferSize(1024);
+
+  // Arm burst detection immediately.
+  setupBurstButton();
+
+  // Small state reset for current boot.
+  burstModeRunning = false;
+  peripheralsOn = false;
+  i2cReady = false;
+  rtcReady = false;
+  sdReady = false;
+  sensorsReady = false;
+  modemReady = false;
+
+  print_wakeup_reason();
+
+  // Detect burst at startup, even if the button is only tapped briefly.
+  bool burstHandled = false;
+  burstHandled = handleBurstRequest("startup");
+
+  // If it woke from EXT0 and burst has not yet been handled, force burst mode.
+  if (!burstHandled && esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT0) {
+    Serial.println("Wakeup source is EXT0, forcing burst mode.");
+    burstHandled = handleBurstRequest("wakeup EXT0");
+  }
+
+  // ---------------- First Boot ----------------
+  if (!burstHandled && firstBoot) {
+    showBootBanner();
+
+    Serial.println("\n\r\n\r--------------------------------------------------");
+    Serial.println("-> First Boot");
+
+    safeTurnOnPeripherals();
+    if (!handleBurstRequest("first boot - after turnOnVRM")) {
+      safeInitI2C();
+    } else {
+      burstHandled = true;
+    }
+
+    if (!burstHandled) {
+      scanAddresses();
+      burstHandled = handleBurstRequest("first boot - after scanAddresses");
+    }
+
+    if (!burstHandled) {
+      muxCycleLeds();
+      burstHandled = handleBurstRequest("first boot - after muxCycleLeds");
+    }
+
+    if (!burstHandled) {
+      safeCheckSD();
+      burstHandled = handleBurstRequest("first boot - after checkSD");
+    }
+
+    if (!burstHandled) {
+      safeCheckFiles();
+      burstHandled = handleBurstRequest("first boot - after checkFile");
+    }
+
+    if (!burstHandled) {
+      safeCheckRTC();
+      burstHandled = handleBurstRequest("first boot - after checkRTC");
+    }
+
+    if (!burstHandled) {
+      safeCheckTime();
+      burstHandled = handleBurstRequest("first boot - after checkTime");
+    }
+
+    if (!burstHandled) {
+      safeCheckSensors();
+      burstHandled = handleBurstRequest("first boot - after checkSensors");
+    }
+
+    if (!burstHandled) {
+      safeReadSensors();
+      burstHandled = handleBurstRequest("first boot - after readSensors");
+    }
+
+    if (!burstHandled) {
+      safeSaveDataToSD();
+      burstHandled = handleBurstRequest("first boot - after saveDataToSD");
+    }
+
+    if (!burstHandled) {
+      Serial.println("No burst pending. Proceeding to sendData() in first boot.");
+      sendData();
+      burstHandled = handleBurstRequest("first boot - after sendData");
+    } else {
+      Serial.println("Burst took priority over first boot transmission.");
+    }
+
+    turnOffVRM();
+    peripheralsOn = false;
+    firstBoot = false;
+
+    Serial.println("\n\r-> End First Boot");
+    Serial.println("--------------------------------------------------\n\r\n\r");
+  }
+
+  // ---------------- Normal Cycle ----------------
+  if (!burstHandled) {
+    showCycleBanner();
+
+    safeTurnOnPeripherals();
+    if (!handleBurstRequest("normal cycle - after turnOnVRM")) {
+      safeInitI2C();
+    } else {
+      burstHandled = true;
+    }
+
+    if (!burstHandled) {
+      muxAllLed();
+      delay(250);
+      muxOffLed();
+      burstHandled = handleBurstRequest("normal cycle - after LED init");
+    }
+
+    if (!burstHandled) {
+      safeCheckRTC();
+      burstHandled = handleBurstRequest("normal cycle - after checkRTC");
+    }
+
+    if (!burstHandled) {
+      safeCheckTime();
+      burstHandled = handleBurstRequest("normal cycle - after checkTime");
+    }
+
+    if (!burstHandled) {
+      safeReadSensors();
+      burstHandled = handleBurstRequest("normal cycle - after readSensors");
+    }
+
+    if (!burstHandled) {
+      muxGreenLed();
+      safeCheckSD();
+      safeCheckFiles();
+      safeSaveDataToSD();
+      burstHandled = handleBurstRequest("normal cycle - after saveDataToSD");
+    }
+
+    if (!burstHandled) {
+      Serial.println("No burst pending. Proceeding to sendData().");
+      sendData();
+      burstHandled = handleBurstRequest("normal cycle - after sendData");
+    } else {
+      Serial.println("Burst took priority over normal transmission.");
+    }
+
+    for (int i = 0; i < 3; i++) {
+      blinkGreenLed();
+    }
+
+    turnOffVRM();
+    peripheralsOn = false;
+  }
+
+  // Final state report before sleep.
+  printSystemStatus();
+
+  prepareDeepSleep30Min();
+}
+
 void loop() {
-  // No se usa - el ESP32 siempre reinicia desde setup()
+  // Not used.
+  // The ESP32 restarts from setup() after each wake-up.
 }
