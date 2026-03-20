@@ -55,7 +55,7 @@ No requiere intervención humana.
 ---
 
 ## 4. Luces del equipo (muy importante en terreno)
-<img width="899" height="1599" alt="image" src="https://github.com/user-attachments/assets/a09a66b6-31b3-4d34-aed2-401bf48580ff" />
+<img width="899" height="1599" alt="image" src="https://github.com/AleReb/SUELO_EC_T_HX2/blob/main/luzverde.png" />
 
 ### Luz verde
 
@@ -67,7 +67,7 @@ Significa:
 Si esta luz aparece periódicamente, el equipo está funcionando bien.
 
 ---
-<img width="899" height="1599" alt="image" src="https://github.com/user-attachments/assets/63aa6d79-e1b2-4456-b8a5-d13713837325" />
+<img width="899" height="1599" alt="image" src="https://github.com/AleReb/SUELO_EC_T_HX2/blob/main/luzamarilla.png" />
 
 ### Luz amarilla
 
