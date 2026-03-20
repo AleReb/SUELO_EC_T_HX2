@@ -14,10 +14,10 @@ La estacion registra y transmite:
 
 - Temperatura y humedad del aire con un sensor DHT21.
 - Temperatura, humedad y conductividad electrica de 2 sensores de suelo RS485/Modbus.
-- Voltaje de bateria.
+- Voltaje de bateria (voltaje referencial tiene un bug en hardware que no perimite leer correctamente su voltaje pero no afecta su funcionamiento).
 - Calidad de senal GSM.
 
-Los datos se guardan en MicroSD y luego se transmiten por red celular al servidor configurado en el firmware.
+Los datos se guardan en MicroSD y luego se transmiten por red celular al servidor configurado en el firmware(si hay red disponible).
 
 ---
 
@@ -63,7 +63,7 @@ En el primer arranque (`firstBoot`), el equipo realiza esta secuencia:
 
 ## 4. Funcionamiento normal
 
-El firmware actual no usa ciclos de 10 segundos acumulados. El flujo real es:
+ El flujo es:
 
 1. El ESP32 despierta.
 2. Enciende perifericos.
@@ -86,12 +86,12 @@ Implementado en [SUELO_EC_T_HX2.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/SUEL
 
 ## 5. Modo burst
 
-El firmware actual implementa un debug largo de 3 horas. En su lugar existe un **modo burst** activado con el boton `BOOT` en GPIO 0.
+El firmware actual implementa un debug largo de 3 horas. El **modo burst** activado con el boton `BOOT` en GPIO 0.
 
 ### Como activarlo
 
-- Presione el boton BOOT durante el arranque o provoque un wakeup externo por GPIO 0.
-- Si el equipo detecta esta solicitud, suspende la transmision normal y entra en modo burst.
+- Presione el boton BOOT durante el arranque o provoque un wakeup externo por GPIO 0 (espere a que el sistema muestre la secuencia de luces normal antes de apretar).
+- Si el equipo detecta esta solicitud, suspende la transmision normal y entra en modo burst (el sistema indica que entro en fase burst haciendo la secuencia de luces varias veces).
 
 ### Que hace el modo burst
 
@@ -104,7 +104,7 @@ El firmware actual implementa un debug largo de 3 horas. En su lugar existe un *
 ### Indicacion visual
 
 - Amarillo: modo burst o transmision en curso se prende cada 10 segundos por 1 segundo.
-- Verde: lectura/guardado correcto.
+- Verde: lectura/guardado correcto (en modo burst cada 5 minutos prende esta luz, en modo normal cada 30 minutos).
 - Rojo: falla visible, normalmente asociada a SD o comunicacion.
 
 La implementacion esta en [sensors.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/sensors.ino).
