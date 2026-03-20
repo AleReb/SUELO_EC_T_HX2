@@ -1,235 +1,199 @@
-# Manual de Uso - Estacion de Monitoreo de Suelo!
+# Manual de Uso en Terreno  
+## Estación de Monitoreo de Suelo
 
-**Firmware revisado:** 0.40  
-**Plataforma:** ESP32 (Arduino Framework)  
-**Contacto:** arebolledo@udd.cl
+Este equipo mide condiciones del suelo y del ambiente, guarda los datos internamente y los envía automáticamente por red celular cuando hay señal disponible.
 
-Este manual describe la operacion real del firmware actual del proyecto `SUELO_EC_T_HX2`, segun el codigo fuente presente en este repositorio.
-
----
-
-## 1. Resumen del sistema
-
-La estacion registra y transmite:
-
-- Temperatura y humedad del aire con un sensor DHT21.
-- Temperatura, humedad y conductividad electrica de 2 sensores de suelo RS485/Modbus.
-- Voltaje de bateria (voltaje referencial tiene un bug en hardware que no perimite leer correctamente su voltaje pero no afecta su funcionamiento).
-- Calidad de senal GSM.
-
-Los datos se guardan en MicroSD y luego se transmiten por red celular al servidor configurado en el firmware(si hay red disponible).
+El sistema está diseñado para funcionar de manera autónoma.
 
 ---
 
-## 2. Requisitos previos
+## 1. Qué mide la estación
 
-Antes de instalar o energizar la estacion, verifique lo siguiente:
+La estación registra automáticamente:
 
-1. MicroSD insertada y funcional.
-2. SIM con plan de datos activo.
-3. APN compatible con el operador.
-4. Bateria o alimentacion conectada.
-5. Sensores conectados:
-   - 1 x DHT21 en GPIO 14.
-   - 2 x sensores de suelo RS485 con direcciones Modbus 1 y 2.
+- Temperatura del aire  
+- Humedad del aire  
+- Temperatura del suelo  
+- Humedad del suelo  
+- Conductividad eléctrica del suelo  
+- Nivel de señal celular  
 
-### APN actual
+Los datos se almacenan internamente aunque no exista señal.
 
-El firmware usa actualmente:
-
-`gigsky-02`
-
-Si la SIM usa otro APN, debe cambiarse en [SUELO_EC_T_HX2.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/SUELO_EC_T_HX2.ino).
+Cuando la señal vuelve, los datos se envían automáticamente.
 
 ---
 
-## 3. Secuencia de arranque
+## 2. Antes de instalar en terreno
 
-En el primer arranque (`firstBoot`), el equipo realiza esta secuencia:
+Verifique siempre:
 
-1. Inicializa la deteccion del boton de modo burst en GPIO 0.
-2. Enciende perifericos mediante la VRM.
-3. Inicializa I2C.
-4. Escanea direcciones I2C.
-5. Verifica la tarjeta SD.
-6. Crea o valida los archivos `/DATA[ID].CSV` y `/cache.csv`.
-7. Verifica el RTC DS3231.
-8. Lee sensores.
-9. Guarda la lectura en la SD.
-10. Intenta transmitir la lectura actual.
-11. Apaga perifericos y entra en deep sleep.
+- La tarjeta SD está insertada (si no esta la sd es falla critica) 
+- La SIM tiene plan de datos activo  
+- La batería está conectada o cargada  
+- Los sensores están conectados  
+- La antena celular está conectada  
+
+Si falta cualquiera de estos elementos, el sistema puede funcionar parcialmente o no transmitir.
 
 ---
 
-## 4. Funcionamiento normal
+## 3. Cómo funciona normalmente
 
- El flujo es:
+El equipo:
 
-1. El ESP32 despierta.
-2. Enciende perifericos.
-3. Verifica RTC y hora.
-4. Lee sensores.
-5. Guarda la lectura en SD.
-6. Intenta transmitir por GSM/GPRS.
-7. Apaga perifericos.
-8. Entra en deep sleep por 30 minutos.
+1. Se enciende automáticamente  
+2. Realiza mediciones  
+3. Guarda los datos  
+4. Intenta enviarlos  
+5. Se apaga temporalmente para ahorrar energía  
 
-### Tiempo de suspension
+Este ciclo se repite cada **30 minutos**.
 
-El tiempo de sleep configurado es:
-
-`1800000000 us = 1800 s = 30 minutos`
-
-Implementado en [SUELO_EC_T_HX2.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/SUELO_EC_T_HX2.ino).
+No requiere intervención humana.
 
 ---
 
-## 5. Modo burst
+## 4. Luces del equipo (muy importante en terreno)
 
-El firmware actual implementa un debug largo de 3 horas. El **modo burst** activado con el boton `BOOT` en GPIO 0.
+### Luz verde
 
-### Como activarlo
+Significa:
 
-- Presione el boton BOOT durante el arranque o provoque un wakeup externo por GPIO 0 (espere a que el sistema muestre la secuencia de luces normal antes de apretar).
-- Si el equipo detecta esta solicitud, suspende la transmision normal y entra en modo burst (el sistema indica que entro en fase burst haciendo la secuencia de luces varias veces).
+✔ Medición correcta  
+✔ Datos guardados correctamente  
 
-### Que hace el modo burst
-
-- Toma **36 lecturas**.
-- Guarda una lectura cada **5 minutos**.
-- Duracion total aproximada: **3 horas**.
-- Guarda todas las lecturas en la SD.
-- No ejecuta `sendData()` durante ese flujo.
-
-### Indicacion visual
-
-- Amarillo: modo burst o transmision en curso se prende cada 10 segundos por 1 segundo.
-- Verde: lectura/guardado correcto (en modo burst cada 5 minutos prende esta luz, en modo normal cada 30 minutos).
-- Rojo: falla visible, normalmente asociada a SD o comunicacion.
-
-La implementacion esta en [sensors.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/sensors.ino).
+Si esta luz aparece periódicamente, el equipo está funcionando bien.
 
 ---
 
-## 6. Sensores y valores registrados
+### Luz amarilla
 
-### Aire
+Significa:
 
-- Temperatura de aire.
-- Humedad de aire.
+✔ Está transmitiendo datos  
+✔ Está en modo especial de medición intensiva  
 
-### Suelo 1 y Suelo 2
-
-Cada sensor Modbus entrega 3 registros desde `0x0000`:
-
-- Humedad del suelo.
-- Temperatura del suelo.
-- Conductividad electrica del suelo.
-
-### Bateria
-
-El voltaje se estima desde el ADC en GPIO 33.
+Si aparece frecuentemente, el equipo está activo.
 
 ---
 
-## 7. Archivos generados en la SD
+### Luz roja
 
-### Historico
+Significa:
 
-Archivo:
+⚠ Error en almacenamiento o comunicación  
 
-`/DATA[stationId].CSV`
+Si aparece constantemente:
 
-Ejemplo:
-
-`/DATA11.CSV`
-
-Contiene todas las lecturas historicas y no se borra automaticamente.
-
-Cabecera real:
-
-`FechaHora,Bateria,TemperaturaExterna,HumedadExterna,ElectroconductividadSuelo1,TemperaturaSuelo1,HumedadSuelo1,ElectroconductividadSuelo2,TemperaturaSuelo2,HumedadSuelo2`
-
-### Cache de transmision
-
-Archivo:
-
-`/cache.csv`
-
-Contiene lecturas pendientes de envio cuando falla el modem, la red o la peticion HTTP. Si el envio posterior resulta exitoso, el archivo se vacia.
-
-Formato real del cache:
-
-`epoch,bateria,temp_aire,hum_aire,ec1,temp_suelo1,hum_suelo1,ec2,temp_suelo2,hum_suelo2`
-
-La logica de almacenamiento esta en [datalogger.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/datalogger.ino).
+- Revisar tarjeta SD  
+- Revisar señal celular  
+- Reiniciar el equipo  
 
 ---
 
-## 8. Transmision de datos
+## 5. Qué pasa si no hay señal celular
 
-La transmision se realiza con el modem conectado a `Serial1`:
+Nada grave.
 
-- RX/TX del modem: GPIO 17 y GPIO 16 segun la configuracion del sketch.
-- Velocidad: `115200`.
-- APN actual: `gigsky-02`.
-- Protocolo: comandos AT con peticion HTTP GET.
+El equipo:
 
-### Comportamiento ante falla
+✔ Guarda todos los datos internamente  
+✔ Espera hasta recuperar señal  
+✔ Envía los datos pendientes automáticamente  
 
-- Si el modem no responde, no hay red o falla el envio HTTP, la lectura actual se guarda en `/cache.csv`.
-- Si la lectura actual se envia correctamente, el equipo intenta reenviar el contenido pendiente de `/cache.csv`.
-
-La logica principal esta en [modem.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/modem.ino).
+No es necesario intervenir.
 
 ---
 
-## 9. Pinout principal
+## 6. Modo de medición intensiva (modo burst)
 
-| Pin ESP32 | Funcion |
-|-----------|---------|
-| 0 | Boton BOOT / solicitud de modo burst |
-| 4 | CS de tarjeta SD |
-| 13 | VRM enable, activo en LOW |
-| 14 | DHT21 |
-| 16 | UART modem |
-| 17 | UART modem |
-| 25 | RS485 RX |
-| 26 | RS485 TX |
-| 27 | RS485 DE |
-| 32 | RS485 RE |
-| 33 | ADC bateria |
+Este modo permite medir con mayor frecuencia durante un periodo limitado.
 
-I2C se usa para:
+Sirve para:
 
-- RTC DS3231
-- Expansor PCF8574 para LEDs
+- Estudios específicos  
+- Validación técnica  
+- Diagnóstico de terreno  
 
----
+### Cómo activarlo
 
-## 10. Indicadores visuales
+1. Encender el equipo  
+2. Esperar que termine la secuencia normal de luces  
+3. Presionar el botón BOOT  
 
-Los LEDs dependen del expansor I2C PCF8574 en direccion `0x20`.
+Si se activa correctamente:
 
-- Verde: operacion correcta, lectura o guardado exitoso.
-- Amarillo: transmision o modo burst.
-- Rojo: error o fallo de comunicacion.
+- La luz amarilla parpadeará repetidamente (cada 10 segundos)  
+- El equipo medirá cada 5 minutos durante 3 horas  
 
-Las rutinas estan en [i2c.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/i2c.ino).
+Durante este periodo:
+
+- No enviará datos por red  
+- Solo almacenará información  
 
 ---
 
-## 11. Observaciones importantes
-1. El nombre del archivo historico real usa extension `.CSV` en mayusculas.
-2. El `stationId` actual en el codigo es `11`.
-3. La version actual definida en codigo es `0.40`.
+## 7. Almacenamiento de datos
+
+Los datos se guardan en la tarjeta SD.
+
+Nunca se eliminan automáticamente.
+
+Esto permite recuperar información incluso si:
+
+- No hubo señal durante días  
+- El sistema se reinició  
+- Hubo fallas de red  
+
+---
+
+## 8. Consumo energético
+
+El equipo está diseñado para bajo consumo.
+
+Por eso:
+
+- Permanece apagado la mayor parte del tiempo  
+- Solo se activa para medir y transmitir  
+
+Esto es normal.
+
+No significa que esté fallando.
+
+---
+
+## 9. Cuándo intervenir en terreno
+
+Debe revisarse el equipo si:
+
+- No hay luces durante varias horas  
+- La luz roja permanece encendida  
+- No hay datos reportados durante días  
+- El equipo sufrió golpes o humedad extrema  
+
+---
+
+## 10. Responsabilidad operativa
+
+El correcto funcionamiento depende de:
+
+- Instalación adecuada  
+- Condiciones ambientales  
+- Estado de batería  
+- Cobertura celular  
+
+El sistema es autónomo, pero requiere supervisión periódica.
 
 ---
 
 ## Licencia
 
-Este proyecto se distribuye bajo licencia **CC BY-NC 4.0**. Revise [LICENSE](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/LICENSE) para el texto completo.
+Este proyecto se distribuye bajo licencia **CC BY-NC 4.0**.
+
+---
 
 ## Descargo
 
-El software y el hardware asociado se entregan "tal cual", sin garantias explicitas ni implicitas. El uso en terreno y la validacion operativa quedan bajo responsabilidad del usuario.
+El software y el hardware asociado se entregan "tal cual", sin garantías explícitas ni implícitas.  
+La validación operativa en terreno es responsabilidad del usuario.
