@@ -187,13 +187,3 @@ El sistema es autónomo, pero requiere supervisión periódica.
 
 ---
 
-## Licencia
-
-Este proyecto se distribuye bajo licencia **CC BY-NC 4.0**.
-
----
-
-## Descargo
-
-El software y el hardware asociado se entregan "tal cual", sin garantías explícitas ni implícitas.  
-La validación operativa en terreno es responsabilidad del usuario.
