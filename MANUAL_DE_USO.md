@@ -1,4 +1,4 @@
-# Manual de Uso - Estacion de Monitoreo de Suelo DICTUC
+# Manual de Uso - Estacion de Monitoreo de Suelo!
 
 **Firmware revisado:** 0.40  
 **Plataforma:** ESP32 (Arduino Framework)  
@@ -86,7 +86,7 @@ Implementado en [SUELO_EC_T_HX2.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/SUEL
 
 ## 5. Modo burst
 
-El firmware actual ya no implementa un debug corto de 5 minutos. En su lugar existe un **modo burst** activado con el boton `BOOT` en GPIO 0.
+El firmware actual implementa un debug largo de 3 horas. En su lugar existe un **modo burst** activado con el boton `BOOT` en GPIO 0.
 
 ### Como activarlo
 
@@ -103,7 +103,7 @@ El firmware actual ya no implementa un debug corto de 5 minutos. En su lugar exi
 
 ### Indicacion visual
 
-- Amarillo: modo burst o transmision en curso.
+- Amarillo: modo burst o transmision en curso se prende cada 10 segundos por 1 segundo.
 - Verde: lectura/guardado correcto.
 - Rojo: falla visible, normalmente asociada a SD o comunicacion.
 
@@ -220,12 +220,9 @@ Las rutinas estan en [i2c.ino](/c:/Users/Ale/Downloads/SUELO_EC_T_HX2/i2c.ino).
 ---
 
 ## 11. Observaciones importantes
-
-1. La documentacion anterior indicaba un ciclo cada 10 segundos con envio cada 30 minutos. Eso ya no coincide con el firmware actual.
-2. El "modo debug de 5 minutos" tampoco coincide con el firmware actual. Hoy existe un modo burst de 3 horas con intervalos de 5 minutos.
-3. El nombre del archivo historico real usa extension `.CSV` en mayusculas.
-4. El `stationId` actual en el codigo es `11`.
-5. La version actual definida en codigo es `0.40`.
+1. El nombre del archivo historico real usa extension `.CSV` en mayusculas.
+2. El `stationId` actual en el codigo es `11`.
+3. La version actual definida en codigo es `0.40`.
 
 ---
 
