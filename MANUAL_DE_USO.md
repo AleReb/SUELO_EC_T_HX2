@@ -1,191 +1,216 @@
-# Manual de Uso en Terreno  
-## Estación de Monitoreo de Suelo
+# Manual de Uso en Terreno
+## Estacion de Monitoreo de Suelo
 
-Este equipo mide condiciones del suelo y del ambiente, guarda los datos internamente y los envía automáticamente por red celular cuando hay señal disponible.
+Este equipo mide condiciones del suelo y del ambiente, guarda los datos en una tarjeta SD y los envia automaticamente por red celular cuando hay cobertura.
 
-El sistema está diseñado para funcionar de manera autónoma.
+El sistema esta pensado para operar de forma autonoma en terreno, con ciclos de medicion y suspension para reducir el consumo de energia.
 
 ---
 
-## 1. Qué mide la estación
+## 1. Que mide la estacion
 
-La estación registra automáticamente:
+La estacion registra automaticamente:
 
-- Temperatura del aire  
-- Humedad del aire  
-- Temperatura del suelo  
-- Humedad del suelo  
-- Conductividad eléctrica del suelo  
-- Nivel de señal celular  
+- Temperatura del aire
+- Humedad del aire
+- Temperatura del suelo
+- Humedad del suelo
+- Conductividad electrica del suelo
+- Nivel de senal celular
+- Voltaje de bateria
 
-Los datos se almacenan internamente aunque no exista señal.
-
-Cuando la señal vuelve, los datos se envían automáticamente.
+Si no hay cobertura celular, los datos no se pierden: quedan almacenados localmente y se envian cuando la comunicacion se recupera.
 
 ---
 
 ## 2. Antes de instalar en terreno
 
-Verifique siempre:
+Verifique siempre lo siguiente:
 
-- La tarjeta SD está insertada (si no esta la sd es falla critica) 
-- La SIM tiene plan de datos activo  
-- La batería está conectada o cargada  
-- Los sensores están conectados  
-- La antena celular está conectada  
+- La tarjeta SD esta insertada y operativa
+- La SIM tiene plan de datos activo
+- La bateria esta conectada o cargada
+- Los sensores estan conectados
+- La antena celular esta conectada
 
-Si falta cualquiera de estos elementos, el sistema puede funcionar parcialmente o no transmitir.
+Si falta cualquiera de estos elementos, el sistema puede medir parcialmente o dejar de transmitir.
 
 ---
 
-## 3. Cómo funciona normalmente
+## 3. Funcionamiento normal
 
-El equipo:
+En operacion normal, el equipo:
 
-1. Se enciende automáticamente  
-2. Realiza mediciones  
-3. Guarda los datos  
-4. Intenta enviarlos  
-5. Se apaga temporalmente para ahorrar energía  
+1. Despierta automaticamente
+2. Lee los sensores
+3. Guarda la medicion en la SD
+4. Intenta transmitir los datos
+5. Apaga perifericos y entra en suspension
 
 Este ciclo se repite cada **30 minutos**.
 
-No requiere intervención humana.
+No requiere intervencion humana durante la operacion normal.
 
 ---
 
-## 4. Luces del equipo (muy importante en terreno)
-<img width="899" height="1599" alt="image" src="https://github.com/AleReb/SUELO_EC_T_HX2/blob/main/luzverde.png" />
+## 4. Indicadores luminosos
+
+Las luces del equipo permiten diagnosticar rapidamente el estado de la estacion en terreno.
 
 ### Luz verde
 
-Significa:
+<div align="center">
+  <img src="https://raw.githubusercontent.com/AleReb/SUELO_EC_T_HX2/main/luzverde.png" alt="Luz verde" width="220" />
+</div>
 
-✔ Medición correcta  
-✔ Datos guardados correctamente  
+Indica:
 
-Si esta luz aparece periódicamente, el equipo está funcionando bien.
+- Medicion correcta
+- Guardado correcto en la tarjeta SD
+- Fin exitoso del ciclo de operacion
+
+Si aparece de forma periodica, el equipo esta funcionando correctamente.
 
 ---
-<img width="899" height="1599" alt="image" src="https://github.com/AleReb/SUELO_EC_T_HX2/blob/main/luzamarilla.png" />
 
 ### Luz amarilla
 
-Significa:
+<div align="center">
+  <img src="https://raw.githubusercontent.com/AleReb/SUELO_EC_T_HX2/main/luzamarilla.png" alt="Luz amarilla" width="220" />
+</div>
 
-✔ Está transmitiendo datos  
-✔ Está en modo especial de medición intensiva  
+Indica:
 
-Si aparece frecuentemente, el equipo está activo.
+- Transmision de datos en curso
+- Modo burst activo
+- Equipo ocupado en una tarea de mayor duracion
+
+Si aparece durante algunos segundos, es normal.
 
 ---
 
 ### Luz roja
 
-Significa:
+Indica una condicion de error, normalmente asociada a almacenamiento o comunicacion.
 
-⚠ Error en almacenamiento o comunicación  
+Si aparece de forma persistente, revisar:
 
-Si aparece constantemente:
-
-- Revisar tarjeta SD  
-- Revisar señal celular  
-- Reiniciar el equipo  
-
----
-
-## 5. Qué pasa si no hay señal celular
-
-Nada grave.
-
-El equipo:
-
-✔ Guarda todos los datos internamente  
-✔ Espera hasta recuperar señal  
-✔ Envía los datos pendientes automáticamente  
-
-No es necesario intervenir.
+- Tarjeta SD
+- Senal celular
+- Alimentacion del equipo
+- Estado general de conexiones
 
 ---
 
-## 6. Modo de medición intensiva (modo burst)
+## 5. Que pasa si no hay senal celular
 
-Este modo permite medir con mayor frecuencia durante un periodo limitado.
+No es una falla critica.
 
-Sirve para:
+En esa condicion, el equipo:
 
-- Estudios específicos  
-- Validación técnica  
-- Diagnóstico de terreno  
+- Guarda todos los datos internamente
+- Mantiene un cache de envio pendiente
+- Reintenta la transmision en ciclos posteriores
 
-### Cómo activarlo
+No es necesario intervenir de inmediato si la estacion sigue midiendo y almacenando.
 
-1. Encender el equipo  
-2. Esperar que termine la secuencia normal de luces  
-3. Presionar el botón BOOT  
+---
 
-Si se activa correctamente:
+## 6. Modo de medicion intensiva (modo burst)
 
-- La luz amarilla parpadeará repetidamente (cada 10 segundos)  
-- El equipo medirá cada 5 minutos durante 3 horas  
+El equipo dispone de un modo especial para medicion intensiva.
 
-Durante este periodo:
+Este modo sirve para:
 
-- No enviará datos por red  
-- Solo almacenará información  
+- Diagnostico en terreno
+- Validacion tecnica
+- Campanas de observacion de alta frecuencia
+
+### Como activarlo
+
+1. Energizar o despertar el equipo
+2. Presionar el boton `BOOT` en el momento de arranque o wakeup
+3. Verificar que el equipo entre al modo burst
+
+### Que hace el modo burst
+
+- Realiza 36 lecturas
+- Guarda una lectura cada 5 minutos
+- Tiene una duracion total aproximada de 3 horas
+- Almacena los datos en la SD
+- Omite la transmision normal mientras el burst esta en ejecucion
+
+Durante este modo, la luz amarilla actua como indicador de actividad.
 
 ---
 
 ## 7. Almacenamiento de datos
 
-Los datos se guardan en la tarjeta SD.
+Los datos se guardan en la tarjeta SD en dos archivos principales:
 
-Nunca se eliminan automáticamente.
+- `DATA[ID].CSV`: historial permanente de mediciones
+- `cache.csv`: datos pendientes de transmision
 
-Esto permite recuperar información incluso si:
+Esto permite recuperar informacion incluso si:
 
-- No hubo señal durante días  
-- El sistema se reinició  
-- Hubo fallas de red  
+- No hubo senal durante varios dias
+- El modem no pudo transmitir
+- Hubo reinicios o fallas de red
 
 ---
 
-## 8. Consumo energético
+## 8. Consumo energetico
 
-El equipo está diseñado para bajo consumo.
+El sistema esta disenado para bajo consumo.
 
 Por eso:
 
-- Permanece apagado la mayor parte del tiempo  
-- Solo se activa para medir y transmitir  
+- Permanece dormido la mayor parte del tiempo
+- Solo activa sensores, SD y modem cuando corresponde
+- Apaga perifericos antes de volver a suspension
 
-Esto es normal.
-
-No significa que esté fallando.
-
----
-
-## 9. Cuándo intervenir en terreno
-
-Debe revisarse el equipo si:
-
-- No hay luces durante varias horas  
-- La luz roja permanece encendida  
-- No hay datos reportados durante días  
-- El equipo sufrió golpes o humedad extrema  
+Esto es normal y forma parte del diseno del equipo.
 
 ---
 
-## 10. Responsabilidad operativa
+## 9. Cuando intervenir en terreno
+
+Se recomienda revisar el equipo si ocurre alguna de estas condiciones:
+
+- No hay luces durante varias horas
+- La luz roja permanece encendida o aparece en todos los ciclos
+- No hay datos reportados durante varios dias
+- El equipo sufrio golpes, ingreso de agua o humedad extrema
+- La antena o el cableado presentan danos visibles
+
+---
+
+## 10. Recomendaciones de operacion
+
+Para una operacion confiable en terreno:
+
+- Mantenga la SD correctamente insertada
+- Verifique periodicamente el estado de la bateria
+- Evite desconectar antena o sensores con el equipo energizado
+- Revise la cobertura celular del sitio de instalacion
+- Inspeccione sellos, conectores y caja ante condiciones climaticas severas
+
+---
+
+## 11. Responsabilidad operativa
 
 El correcto funcionamiento depende de:
 
-- Instalación adecuada  
-- Condiciones ambientales  
-- Estado de batería  
-- Cobertura celular  
+- Instalacion adecuada
+- Estado de la bateria
+- Cobertura celular
+- Integridad de sensores, antena y tarjeta SD
+- Condiciones ambientales del sitio
 
-El sistema es autónomo, pero requiere supervisión periódica.
+El sistema es autonomo, pero requiere supervision periodica.
 
 ---
 
+## 12. Nota para exportacion a PDF
+
+Este archivo fue ordenado para convertirlo con `pandoc`. Las imagenes usan URLs `raw.githubusercontent.com`, que funcionan mejor que los enlaces `blob` de GitHub al exportar a HTML o PDF.
