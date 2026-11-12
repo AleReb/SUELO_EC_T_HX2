@@ -1,5 +1,7 @@
 # — Estación de Monitoreo de Suelo TEMPERATURA, HUMEDAD AIRE Y SUELO y ELECTROCONDUCTIVIDAD SUELO
 
+Firmware principal: `SUELO_EC_T_HX2/`. La variante `SUELO_EC_T_HX2W/` es obsoleta y se conserva como referencia. Sus CSV diarios usan un formato de fecha distinto; no mezclar versiones en un mismo archivo.
+
 **Autor de codigo base:** Sebastian Adonay
 **Autor de modificaciones:** Alejandro Rebolledo  
 **Contacto:** arebolledo@udd.cl 

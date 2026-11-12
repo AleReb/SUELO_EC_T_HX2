@@ -299,17 +299,25 @@ void createFile(fs::FS &fs, const char *path) {
   file.close();
 }
 
-void checkSD() {
-  if (!SD.begin(4)) {
-    Serial.println("Card Mount Failed");
-    return;
-  }
-  uint8_t cardType = SD.cardType();
+// Avisar sin impedir que el equipo intente transmitir.
+bool initSD() {
+  if (SD.begin(4) && SD.cardType() != CARD_NONE)
+    return true;
 
-  if (cardType == CARD_NONE) {
-    Serial.println("No hay SD");
-    return;
+  Serial.println("No se detecta la tarjeta SD; se intentara transmitir igualmente.");
+  for (int i = 0; i < 3; i++) {
+    muxRedLed();
+    delay(200);
+    muxOffLed();
+    delay(200);
   }
+  return false;
+}
+
+void checkSD() {
+  if (!initSD())
+    return;
+  uint8_t cardType = SD.cardType();
 
   Serial.print("Tipo de SD: ");
   if (cardType == CARD_MMC) {
@@ -333,16 +341,9 @@ void checkSD() {
 
 void fastCheckSD() {
   Serial.print("> Check SD: ");
-  if (!SD.begin(4)) {
-    Serial.println("Card Mount Failed");
+  if (!initSD())
     return;
-  }
   uint8_t cardType = SD.cardType();
-
-  if (cardType == CARD_NONE) {
-    Serial.println("No hay SD");
-    return;
-  }
 
   Serial.print("Tipo de SD: ");
   if (cardType == CARD_MMC) {

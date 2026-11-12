@@ -1,3 +1,6 @@
+// OBSOLETO: variante historica. Usar el firmware principal en ../SUELO_EC_T_HX2/.
+// Conservado como referencia; sus CSV diarios usan tiempo Unix en vez de FechaHora.
+
 // ----------------------------------------
 /*
 sprintf(enlace,
