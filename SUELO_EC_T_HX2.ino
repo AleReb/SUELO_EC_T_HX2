@@ -334,6 +334,7 @@ void setup() {
   sensorsReady = false;
   modemReady = false;
 
+  serialClockConsole();
   print_wakeup_reason();
 
   // Detect burst at startup, even if the button is only tapped briefly.

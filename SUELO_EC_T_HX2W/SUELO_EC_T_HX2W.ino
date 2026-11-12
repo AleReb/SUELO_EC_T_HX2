@@ -82,6 +82,7 @@ char apn[] = "gigsky-02";
 void setup() {
   Serial.begin(115200);
   Serial.setRxBufferSize(1024);
+  serialClockConsole();
   print_wakeup_reason(); // Causa del reinicio
 
   // --- Modo Debug: si despertó por botón GPIO 0 ---

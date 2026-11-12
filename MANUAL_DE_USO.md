@@ -53,6 +53,20 @@ No requiere intervencion humana durante la operacion normal.
 
 ---
 
+## Ajustar la fecha y la hora
+
+Conecte la estación por USB y abra un monitor serie a 115200 baudios, configurado para enviar fin de línea LF o CRLF. Encienda o reinicie la estación y, dentro de los primeros 15 segundos, envíe por ejemplo:
+
+```text
+FECHA 2026-12-11 14:30:00
+```
+
+La estación confirma si pudo actualizar el reloj. También puede enviar `HORA` para consultarlo o `SALIR` para continuar inmediatamente. Use la referencia horaria del sistema receptor; el reloj no cambia automáticamente de zona horaria ni por horario de verano.
+
+Las mediciones se guardan por estación y día, por ejemplo `esta1_11_12_2026.csv`. Los archivos históricos anteriores permanecen en la tarjeta.
+
+---
+
 ## 4. Indicadores luminosos
 
 Las luces del equipo permiten diagnosticar rapidamente el estado de la estacion en terreno.

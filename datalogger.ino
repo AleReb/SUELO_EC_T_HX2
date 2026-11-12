@@ -1,3 +1,17 @@
+String historyFileName(const DateTime &timestamp) {
+  char path[48];
+  snprintf(path, sizeof(path), "/esta%d_%02d_%02d_%04d.csv", stationId,
+           timestamp.day(), timestamp.month(), timestamp.year());
+  return String(path);
+}
+
+void ensureHistoryFile(const String &fileName) {
+  if (!SD.exists(fileName.c_str())) {
+    writeFile(SD, fileName.c_str(),
+              "FechaHora,Bateria,TemperaturaExterna,HumedadExterna,ElectroconductividadSuelo1,TemperaturaSuelo1,HumedadSuelo1,ElectroconductividadSuelo2,TemperaturaSuelo2,HumedadSuelo2\r\n");
+  }
+}
+
 void readCache() {
   Serial.println("> Leer cache: ");
   int filas = countFileRows(SD, "/cache.csv");
@@ -23,7 +37,8 @@ String buildCacheMessage() {
 }
 
 void saveDataToSD() {
-  String fileName = "/DATA" + String(stationId) + ".CSV";
+  String fileName = historyFileName(now);
+  ensureHistoryFile(fileName);
   String historyMessage =
       formatDateTime(now) + "," + String(bateria, 4) + "," +
       String(airTemperature, 1) + "," + String(airHumidity, 1) + "," +
@@ -47,24 +62,8 @@ void saveToCache(String msg) {
 }
 
 void checkFile() {
-  String fileName = "/DATA" + String(stationId) + ".CSV";
-  Serial.print("  Check ");
-  Serial.print(fileName);
-  Serial.print("  ");
-  File file = SD.open(fileName);
-  if (!file) {
-    Serial.print("File doesn't exist  ");
-    Serial.print("Creating file...  ");
-    writeFile(SD, fileName.c_str(),
-              "FechaHora,Bateria,TemperaturaExterna,HumedadExterna,ElectroconductividadSuelo1,TemperaturaSuelo1,HumedadSuelo1,ElectroconductividadSuelo2,TemperaturaSuelo2,HumedadSuelo2\r\n");
-  } else {
-    Serial.print("File already exists");
-  }
-  file.close();
-  Serial.println();
-
   Serial.print("  Check cache.csv  ");
-  file = SD.open("/cache.csv");
+  File file = SD.open("/cache.csv");
   if (!file) {
     Serial.print("File doesn't exist  ");
     Serial.print("Creating file...  ");
