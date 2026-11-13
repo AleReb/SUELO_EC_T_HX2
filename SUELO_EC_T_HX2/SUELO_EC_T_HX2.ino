@@ -21,10 +21,10 @@ Variables:
 */
 // ----------------------------------------
 
-#define stationId 9
+#define stationId 11
 #define firmwareVersion 0.41
 
-#if stationId == 10
+#if stationId == 9
 const char *BASE_SERVER_URL =
   "http://api-sensores.cmasccp.cl/"
   "insertarMedicion?idsSensores=994,994,996,997,997,997,997,997,998,998,998,"

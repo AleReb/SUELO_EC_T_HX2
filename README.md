@@ -100,15 +100,18 @@ Wakeup (cada 10s)
 
 ### Ajustar fecha y hora por USB
 
-Conecte la estación a un computador y abra un monitor serie a **115200 baudios**, con fin de línea **LF o CRLF**. Encienda o reinicie la estación; durante los siguientes 15 segundos se aceptan estos comandos:
+1. Conecte la estación al computador por USB y abra el monitor serie.
+2. Configure **115200 baudios** y fin de línea **LF o CRLF**.
+3. Encienda o reinicie la estación. La consola acepta comandos durante los primeros **15 segundos**.
+4. Envíe la fecha y hora con el formato `FECHA AAAA-MM-DD HH:MM:SS`, usando dos dígitos para mes, día, hora, minutos y segundos. Por ejemplo:
 
-```text
-HORA
-FECHA 2026-12-11 14:30:00
-SALIR
-```
+   ```text
+   FECHA 2026-11-12 14:30:00
+   ```
 
-`HORA` muestra el reloj, `FECHA` actualiza el RTC y `SALIR` inicia el ciclo sin esperar el fin de la ventana. Espere el mensaje de confirmación; las fechas y horas inválidas se rechazan. La fecha se introduce en formato año-mes-día, usando la misma referencia horaria que utilice el sistema receptor: el RTC no aplica zona horaria ni cambios de horario automáticamente. La ventana no se abre durante los despertares programados ni por el botón BOOT.
+5. Compruebe que aparezca `RTC actualizado correctamente`. Envíe `HORA` para consultar el reloj o `SALIR` para iniciar el ciclo sin esperar el fin de los 15 segundos.
+
+Si el reloj no está disponible, aparece `ERROR: RTC no disponible`. Las fechas inválidas se rechazan. La consola no se abre en despertares programados ni al despertar con el botón BOOT. Use la misma referencia horaria que el sistema receptor: el RTC no cambia automáticamente de zona horaria ni por horario de verano.
 
 El nombre del archivo se determina con la fecha de cada medición, incluso si cambia el día durante una ráfaga. Los históricos antiguos (`DATA<ID>.CSV` o `data.csv`) no se modifican ni migran. La caché `cache.csv` conserva su formato y función para los envíos pendientes.
 
